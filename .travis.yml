@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t legoweggo/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true legoweggo/react-test npm test
+
+after_succes:
+  - docker build -t legoweggo/multi-client ./client
+  - docker build -t legoweggo/multi-nginx ./nginx
+  - docker build -t legoweggo/multi-server ./server
+  - docker build -t legoweggo/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push legoweggo/multi-client
+  - docker push legoweggo/multi-nginx
+  - docker push legoweggo/multi-server
+  - docker push legoweggo/multi-worker
